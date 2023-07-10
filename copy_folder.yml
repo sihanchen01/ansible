@@ -1,0 +1,12 @@
+---
+- hosts: workstations
+  become: true
+  tasks:
+
+  - name: copy a folder
+    copy:
+      src: testing/
+      dest: /home/ubuntu/testing/
+
+
+

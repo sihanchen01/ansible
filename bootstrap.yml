@@ -1,0 +1,45 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: install updates (CentOS)
+    tags: always
+    dnf:
+      update_only: yes
+      update_cache: yes
+    when: ansible_distribution == "CentOS"
+
+  - name: install updates (Ubuntu)
+    tags: always
+    apt:
+      upgrade: dist
+      update_cache: yes
+    when: ansible_distribution == "Ubuntu"
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: create user sihan
+    tags: always
+    user:
+      name: sihan
+      group: root
+
+  - name: add ssh key for sihan
+    tags: always
+    authorized_key:
+      user: sihan
+      key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILx8EMA1Iqanp283u00JUU+8SN0FPG3RWx0xtvT+cdcK ansible"
+
+  - name: add sudoers file for sihan
+    tags: always
+    copy:
+      src: sudoer_sihan
+      dest: /etc/sudoers.d/sihan
+      owner: root
+      group: root
+      mode: 0440
+

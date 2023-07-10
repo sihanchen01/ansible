@@ -4,19 +4,29 @@
   become: true
   pre_tasks:
 
-  - name: install updates (CentOS)
+  - name: update repo index (CentOS)
     tags: always
     dnf:
-      update_only: yes
       update_cache: yes
+    changed_when: false
     when: ansible_distribution == "CentOS"
 
-  - name: install updates (Ubuntu)
+  - name: update repo index (Ubuntu)
     tags: always
     apt:
-      upgrade: dist
       update_cache: yes
+    changed_when: false
     when: ansible_distribution == "Ubuntu"
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: add ssh key for sihan
+    tags: always
+    authorized_key:
+      user: sihan
+      key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILx8EMA1Iqanp283u00JUU+8SN0FPG3RWx0xtvT+cdcK ansible"
 
 - hosts: workstations
   become: true
@@ -34,7 +44,6 @@
       mode: 0755
       owner: root
       group: root
-
 
 - hosts: web_servers
   become: true
@@ -57,6 +66,30 @@
         - php
       state: latest
     when: ansible_distribution == "CentOS"
+
+  - name: start httpd (CentOS)
+    tags: apache, centos, httpd
+    service:
+      name: httpd
+      state: started
+      enabled: yes
+    when: ansible_distribution == "CentOS"
+
+  - name: change email address for admin
+    tags: apache, centos, httpd
+    lineinfile:
+      path: /etc/httpd/conf/httpd.conf
+      regexp: '^ServerAdmin'
+      line: ServerAdmin testuser@testing.com
+    when: ansible_distribution == "CentOS"
+    register: centos_httpd
+
+  - name: restart httpd (CentOS)
+    tags: apache, centos, httpd
+    service:
+      name: httpd
+      state: restarted
+    when: centos_httpd.changed
 
   - name: copy default html for site
     tags: apache, apache2, httpd
